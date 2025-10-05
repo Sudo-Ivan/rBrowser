@@ -1,5 +1,4 @@
-# Use an official Python runtime as a parent image
-FROM python:3.13-slim-bullseye
+FROM python:3.13-alpine
 
 # Keep Python output unbuffered and avoid writing .pyc files
 ENV PYTHONUNBUFFERED=1 \
@@ -8,11 +7,8 @@ ENV PYTHONUNBUFFERED=1 \
 # Set the working directory in the container
 WORKDIR /app
 
-# Install minimal build/runtime deps (no recommended extras) and clean apt lists to reduce size.
 # Adjust packages if your requirements need additional system libs (e.g. libssl-dev, libxml2-dev).
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates gcc libpq-dev && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates
 
 # Install Python dependencies (no cache).
 COPY requirements.txt .
@@ -27,7 +23,7 @@ COPY . .
 COPY config /home/appuser/.reticulum/config
 
 # Create a non-root user and set ownership of the application directory and config
-RUN useradd -m -u 1000 appuser || true && \
+RUN adduser -D -u 1000 appuser || true && \
     chown -R appuser:appuser /app /home/appuser/.reticulum || true && \
     chmod 600 /home/appuser/.reticulum/config || true
 USER appuser
