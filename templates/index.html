@@ -3361,110 +3361,98 @@ function detectContentType(content) {
 
         console.log('Browser initialization complete');
 
-    // Mobile nodes button in tab bar
-        if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
-            const nodesBtn = document.createElement('button');
-            nodesBtn.className = 'mobile-nodes-btn';
-            nodesBtn.innerHTML = '📋 Nodes';
-            
-            // Add before "New Tab" button
+    // Burger menu for smaller screens (tablets and mobile)
+        if (window.matchMedia('(max-width: 1024px)').matches) {
+            const burgerBtn = document.createElement('button');
+            burgerBtn.className = 'burger-menu-btn';
+            burgerBtn.innerHTML = `
+                <div class="burger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            burgerBtn.title = 'Open menu';
+
+            // Add to the beginning of the tab bar
             const tabBar = document.querySelector('.tab-bar');
-            const newTabBtn = document.querySelector('.new-tab-btn');
-            if (tabBar && newTabBtn) {
-                tabBar.insertBefore(nodesBtn, newTabBtn);
+            if (tabBar) {
+                tabBar.insertBefore(burgerBtn, tabBar.firstChild);
             }
-            
+
             const sidebar = document.querySelector('.sidebar');
-            
-            nodesBtn.addEventListener('click', (e) => {
+
+            // Create overlay for mobile
+            const overlay = document.createElement('div');
+            overlay.className = 'mobile-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1999;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                display: none;
+            `;
+            document.body.appendChild(overlay);
+
+            burgerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                sidebar.classList.toggle('mobile-show');
-                nodesBtn.innerHTML = sidebar.classList.contains('mobile-show') ? '✕ Close' : '📋 Nodes';
-            });
-            
-            // Close when clicking outside sidebar
-            document.addEventListener('click', (e) => {
-                if (sidebar.classList.contains('mobile-show') && 
-                    !sidebar.contains(e.target) && 
-                    !nodesBtn.contains(e.target)) {
+                const isOpen = sidebar.classList.contains('mobile-show');
+
+                if (isOpen) {
+                    // Close menu
                     sidebar.classList.remove('mobile-show');
-                    nodesBtn.innerHTML = '📋 Nodes';
+                    burgerBtn.classList.remove('open');
+                    overlay.style.left = '0px';
+                    overlay.style.opacity = '0';
+                    overlay.style.visibility = 'hidden';
+                    setTimeout(() => overlay.style.display = 'none', 300);
+                    burgerBtn.title = 'Open menu';
+                } else {
+                    // Open menu
+                    sidebar.classList.add('mobile-show');
+                    burgerBtn.classList.add('open');
+                    overlay.style.display = 'block';
+                    // Position overlay to not cover the sidebar
+                    setTimeout(() => {
+                        overlay.style.left = '280px';
+                        overlay.style.opacity = '1';
+                        overlay.style.visibility = 'visible';
+                    }, 10);
+                    burgerBtn.title = 'Close menu';
                 }
             });
-            
+
+            // Close when clicking overlay
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('mobile-show');
+                burgerBtn.classList.remove('open');
+                overlay.style.left = '0px';
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+                setTimeout(() => overlay.style.display = 'none', 300);
+                burgerBtn.title = 'Open menu';
+            });
+
             // Close when node clicked
             document.getElementById('node-list').addEventListener('click', (e) => {
                 if (e.target.closest('.node-item')) {
                     setTimeout(() => {
                         sidebar.classList.remove('mobile-show');
-                        nodesBtn.innerHTML = '📋 Nodes';
+                        burgerBtn.classList.remove('open');
+                        overlay.style.left = '0px';
+                        overlay.style.opacity = '0';
+                        overlay.style.visibility = 'hidden';
+                        setTimeout(() => overlay.style.display = 'none', 300);
+                        burgerBtn.title = 'Open menu';
                     }, 200);
                 }
             });
-        }
-        
-    // Orientation alert for mobile devices - auto-hide after 5 seconds
-        if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
-            let alertTimeout = null;
-            
-            function checkOrientation() {
-                const isPortrait = window.innerHeight > window.innerWidth;
-                
-                if (isPortrait) {
-                    // Create alert if it doesn't exist
-                    if (!document.getElementById('orientation-alert')) {
-                        const alert = document.createElement('div');
-                        alert.id = 'orientation-alert';
-                        alert.style.cssText = `
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            right: 0;
-                            background: #fb8500;
-                            color: white;
-                            padding: 12px;
-                            text-align: center;
-                            z-index: 3000;
-                            font-size: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                            transition: opacity 0.3s ease;
-                        `;
-                        alert.innerHTML = '📱 For better experience, please rotate your device to landscape mode';
-                        document.body.appendChild(alert);
-                        
-                        // Auto-hide after 5 seconds
-                        alertTimeout = setTimeout(() => {
-                            alert.style.opacity = '0';
-                            setTimeout(() => {
-                                if (alert.parentNode) {
-                                    alert.remove();
-                                }
-                            }, 300); // Wait for fade animation
-                        }, 5000);
-                    }
-                } else {
-                    // Remove alert in landscape
-                    if (alertTimeout) {
-                        clearTimeout(alertTimeout);
-                        alertTimeout = null;
-                    }
-                    const alert = document.getElementById('orientation-alert');
-                    if (alert) {
-                        alert.remove();
-                    }
-                }
-            }
-            
-            // Check on load
-            checkOrientation();
-            
-            // Check on orientation change
-            window.addEventListener('orientationchange', () => {
-                setTimeout(checkOrientation, 100);
-            });
-            
-            // Check on resize
-            window.addEventListener('resize', checkOrientation);
         }
 
 
