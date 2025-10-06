@@ -23,7 +23,7 @@ setup(
     long_description_content_type="text/markdown",
     license="MIT",
     url="https://github.com/fr33n0w/rBrowser",
-    py_modules=["rBrowser"],
+    packages=["rbrowser"],
     include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -48,7 +48,7 @@ setup(
     install_requires=read_requirements(),
     entry_points={
         "console_scripts": [
-            "rBrowser=rBrowser:main",
+            "rBrowser=rbrowser:main",
         ],
     },
     project_urls={
