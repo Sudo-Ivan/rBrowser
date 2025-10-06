@@ -647,8 +647,8 @@ body { background: #0d1117; color: #e6edf3; margin: 0; height: 100vh; overflow: 
     opacity: 0.6; 
 }
 
-/* Touch device optimization - Complete mobile CSS */
-@media (hover: none) and (pointer: coarse) {
+/* Tablet and mobile optimization - Burger menu for smaller screens */
+@media (max-width: 1024px) {
     * {
         box-sizing: border-box;
     }
@@ -672,19 +672,20 @@ body { background: #0d1117; color: #e6edf3; margin: 0; height: 100vh; overflow: 
     /* Sidebar - force it off screen */
     .sidebar {
         position: fixed !important;
-        left: -320px !important;
+        left: -280px !important;
         top: 0 !important;
         width: 280px !important;
         min-width: 280px !important;
         max-width: 280px !important;
         height: 100vh !important;
         z-index: 2000 !important;
-        transition: left 0.3s ease;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        box-shadow: 2px 0 20px rgba(0,0,0,0.6);
         margin: 0 !important;
         padding: 0 !important;
+        border-right: 1px solid #30363d;
     }
-    
+
     .sidebar.mobile-show {
         left: 0 !important;
     }
@@ -712,23 +713,100 @@ body { background: #0d1117; color: #e6edf3; margin: 0; height: 100vh; overflow: 
         display: none !important;
     }
     
-    /* Mobile nodes button in tab bar */
-    .mobile-nodes-btn {
-        background: #238636;
-        border: 1px solid #2ea043;
-        color: white;
-        padding: 10px 12px;
+    /* Burger menu button for mobile */
+    .burger-menu-btn {
+        background: #161b22;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+        padding: 8px;
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 12px;
         flex-shrink: 0;
-        transition: all 0.12s ease;
-        white-space: nowrap;
-        font-weight: 600;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        margin-right: 6px;
+        position: relative;
+        z-index: 1001;
     }
-    
-    .mobile-nodes-btn:active {
-        background: #2ea043;
+
+    .burger-menu-btn:hover {
+        background: #21262d;
+        border-color: #58a6ff;
+        transform: scale(1.05);
+    }
+
+    .burger-menu-btn:active {
+        transform: scale(0.95);
+    }
+
+    .burger-menu-btn.open {
+        background: #58a6ff;
+        border-color: #79c0ff;
+    }
+
+    .burger-menu-btn.open .burger-icon span {
+        background: #0d1117;
+    }
+
+    .burger-menu-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #58a6ff;
+    }
+
+    /* Smooth animation for burger icon */
+    .burger-icon span {
+        transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+
+    .burger-icon {
+        width: 20px;
+        height: 16px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .burger-icon span {
+        display: block;
+        height: 2px;
+        width: 100%;
+        background: #e6edf3;
+        border-radius: 1px;
+        transition: all 0.3s ease;
+        transform-origin: center;
+    }
+
+    .burger-menu-btn.open .burger-icon span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .burger-menu-btn.open .burger-icon span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .burger-menu-btn.open .burger-icon span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -6px);
+    }
+
+    /* Mobile overlay */
+    .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        display: none;
     }
     
     /* Hide navigation controls (back/forward/reload/home) */
