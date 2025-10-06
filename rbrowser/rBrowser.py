@@ -6,6 +6,7 @@ import time
 import threading
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request, send_from_directory, Response, send_file
+from jinja2 import PackageLoader, Environment
 import mimetypes
 import io
 import RNS
@@ -14,6 +15,11 @@ import secrets
 from pathlib import Path
 import queue
 import argparse
+try:
+    from importlib import resources
+except ImportError:
+    # Python < 3.7
+    import importlib_resources as resources
 
 # Ensure UTF-8 output for Windows console
 if sys.platform == "win32":
@@ -23,8 +29,33 @@ if sys.platform == "win32":
     except:
         pass
 
+def get_resource_path(resource_name):
+    """Get the path to a resource file within the package."""
+    try:
+        # Try to get the resource as a file path
+        path = resources.files(__package__).joinpath(resource_name)
+        return str(path)
+    except (AttributeError, FileNotFoundError):
+        # Fallback for older Python versions or when resources are not files
+        return resource_name
+
+def get_resource_content(resource_name):
+    """Get the content of a resource file."""
+    try:
+        return resources.files(__package__).joinpath(resource_name).read_text()
+    except (AttributeError, FileNotFoundError):
+        # Fallback: try to read as file
+        try:
+            with open(resource_name, 'r', encoding='utf-8') as f:
+                return f.read()
+        except FileNotFoundError:
+            return None
+
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16) # needed for flask sessions
+
+# Configure Flask to use templates from the package
+app.jinja_loader = PackageLoader(__package__, 'templates')
 
 class NomadNetBrowser:
     def __init__(self, main_browser, destination_hash):
@@ -1281,7 +1312,8 @@ def index():
 
 @app.route('/style.css')
 def serve_css():
-    return send_from_directory('templates', 'style.css', mimetype='text/css')
+    css_path = get_resource_path('templates/style.css')
+    return send_file(css_path, mimetype='text/css')
 
 @app.route('/api/nodes')
 def api_nodes():
@@ -1331,13 +1363,9 @@ def api_fetch_page(node_hash):
 def serve_purify():
     """Serve the DOMPurify library"""
     try:
-        script_path = os.path.join('script', 'purify.min.js')
-        if os.path.exists(script_path):
-            print(f"✅ Serving DOMPurify from: {script_path}")
-            return send_from_directory('script', 'purify.min.js', mimetype='application/javascript')
-        else:
-            print(f"❌ DOMPurify not found at: {script_path}")
-            return "console.error('DOMPurify file not found');", 404
+        script_path = get_resource_path('script/purify.min.js')
+        print(f"✅ Serving DOMPurify from: {script_path}")
+        return send_file(script_path, mimetype='application/javascript')
     except Exception as e:
         print(f"❌ Error serving DOMPurify: {e}")
         return f"console.error('Error loading DOMPurify: {str(e)}');", 500
@@ -1346,13 +1374,9 @@ def serve_purify():
 def serve_micron_parser():
     """Serve the modified micron parser script"""
     try:
-        script_path = os.path.join('script', 'micron-parser_original.js')
-        if os.path.exists(script_path):
-            print(f"✅ Serving micron parser from: {script_path}")
-            return send_from_directory('script', 'micron-parser_original.js', mimetype='application/javascript')
-        else:
-            print(f"❌ Micron parser not found at: {script_path}")
-            return "console.error('Micron parser file not found');", 404
+        script_path = get_resource_path('script/micron-parser_original.js')
+        print(f"✅ Serving micron parser from: {script_path}")
+        return send_file(script_path, mimetype='application/javascript')
     except Exception as e:
         print(f"❌ Error serving micron parser: {e}")
         return f"console.error('Error loading micron parser: {str(e)}');", 500
@@ -1722,18 +1746,18 @@ def api_check_cache_status(node_hash):
 def serve_go_icon():
     """Serve the go icon"""
     try:
-        template_path = get_resource_path('templates') if 'get_resource_path' in globals() else 'templates'
-        return send_from_directory(template_path, 'go.png', mimetype='image/png')
+        icon_path = get_resource_path('templates/go.png')
+        return send_file(icon_path, mimetype='image/png')
     except Exception as e:
-        print(f"❌ Error serving star icon: {e}")
+        print(f"❌ Error serving go icon: {e}")
         return "", 404
 
 @app.route('/templates/search.png')
 def serve_search_icon():
     """Serve the search icon"""
     try:
-        template_path = get_resource_path('templates') if 'get_resource_path' in globals() else 'templates'
-        return send_from_directory(template_path, 'search.png', mimetype='image/png')
+        icon_path = get_resource_path('templates/search.png')
+        return send_file(icon_path, mimetype='image/png')
     except Exception as e:
         print(f"❌ Error serving search icon: {e}")
         return "", 404
@@ -1742,8 +1766,8 @@ def serve_search_icon():
 def serve_star_icon():
     """Serve the star icon"""
     try:
-        template_path = get_resource_path('templates') if 'get_resource_path' in globals() else 'templates'
-        return send_from_directory(template_path, 'star.png', mimetype='image/png')
+        icon_path = get_resource_path('templates/star.png')
+        return send_file(icon_path, mimetype='image/png')
     except Exception as e:
         print(f"❌ Error serving star icon: {e}")
         return "", 404
@@ -1752,8 +1776,8 @@ def serve_star_icon():
 def serve_ping_icon():
     """Serve the ping icon"""
     try:
-        template_path = get_resource_path('templates') if 'get_resource_path' in globals() else 'templates'
-        return send_from_directory(template_path, 'ping.png', mimetype='image/png')
+        icon_path = get_resource_path('templates/ping.png')
+        return send_file(icon_path, mimetype='image/png')
     except Exception as e:
         print(f"❌ Error serving ping icon: {e}")
         return "", 404
@@ -1762,8 +1786,8 @@ def serve_ping_icon():
 def serve_fingerprint_icon():
     """Serve the fingerprint icon"""
     try:
-        template_path = get_resource_path('templates') if 'get_resource_path' in globals() else 'templates'
-        return send_from_directory(template_path, 'fingerprint.png', mimetype='image/png')
+        icon_path = get_resource_path('templates/fingerprint.png')
+        return send_file(icon_path, mimetype='image/png')
     except Exception as e:
         print(f"❌ Error serving fingerprint icon: {e}")
         return "", 404
@@ -1962,27 +1986,38 @@ def main():
     args = parser.parse_args()
 
     try:
-        # Check file structure first
-        template_path = os.path.join('templates', 'index.html')
-        if os.path.exists(template_path):
-            print(f"✅ Found HTML template: {template_path}")
-        else:
-            print(f"❌ HTML template not found: {template_path}")
-            print("   Please verify templates/ directory and index.html file")
+        # Check resource availability
+        try:
+            template_content = get_resource_content('templates/index.html')
+            if template_content:
+                print("✅ Found HTML template in package resources")
+            else:
+                print("❌ HTML template not found in package resources")
+                print("   Please verify templates/ directory and index.html file")
+                return 1
+        except Exception as e:
+            print(f"❌ Error accessing HTML template: {e}")
             return 1
-        
-        micron_path = os.path.join('script', 'micron-parser_original.js')
-        if os.path.exists(micron_path):
-            print(f"✅ Found Micron parser: {micron_path}")
-        else:
-            print(f"⚠️ Micron parser not found: {micron_path}")
+
+        try:
+            micron_content = get_resource_content('script/micron-parser_original.js')
+            if micron_content:
+                print("✅ Found Micron parser in package resources")
+            else:
+                print("⚠️ Micron parser not found in package resources")
+                print("   Fallback parser will be used")
+        except Exception as e:
+            print(f"⚠️ Error accessing Micron parser: {e}")
             print("   Fallback parser will be used")
 
-        dom_path = os.path.join('script', 'purify.min.js')
-        if os.path.exists(dom_path):
-            print(f"✅ Found DOMPurify: {dom_path}")
-        else:
-            print(f"⚠️ DOMPurify not found: {dom_path}")
+        try:
+            dom_content = get_resource_content('script/purify.min.js')
+            if dom_content:
+                print("✅ Found DOMPurify in package resources")
+            else:
+                print("⚠️ DOMPurify not found in package resources")
+        except Exception as e:
+            print(f"⚠️ Error accessing DOMPurify: {e}")
         
         # Verify browser was initialized successfully
         if not hasattr(browser, 'reticulum_ready') or not browser.reticulum_ready:
@@ -1996,10 +2031,9 @@ def main():
         # Start announce monitoring
         browser.start_monitoring()
         
-        host_display = 'localhost' if args.host == '0.0.0.0' else args.host
-        print(f"🌐 Starting local web server on http://{host_display}:{args.port}")
+        print(f"🌐 Starting local web server on http://{args.host}:{args.port}")
         print("📡 Listening for NomadNetwork announces...")
-        print(f"🔍 Open your browser to http://{host_display}:{args.port}")
+        print(f"🔍 Open your browser to http://{args.host}:{args.port}")
         print("=========== Press Ctrl+C to stop and exit ============\n")
 
         # Start the web server
